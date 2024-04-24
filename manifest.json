@@ -1,0 +1,10 @@
+{
+  "id": "fontr-plugin",
+  "name": "Fontr",
+  "version": "0.0.1",
+  "minAppVersion": "0.0.1",
+  "description": "Add custom fonts to your markdown",
+  "author": "devsmkna",
+  "authorUrl": "https://github.com/devsmkna",
+  "isDesktopOnly": false
+}
