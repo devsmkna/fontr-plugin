@@ -7,6 +7,7 @@ export const FONTR_STYLE = [
 ];
 
 export type FontrSettings = {
+  toDownload: boolean;
   fonts: {
     name: string;
     style: (typeof FONTR_STYLE)[number];
@@ -14,6 +15,7 @@ export type FontrSettings = {
 };
 
 export const DEFAULT_SETTINGS: FontrSettings = {
+  toDownload: false,
   fonts: [
     {
       name: "Noto Sans",
