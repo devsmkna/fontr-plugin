@@ -4,26 +4,19 @@ export const FONTR_STYLE = [
   "DISPLAY",
   "SCRIPT",
   "MONOSPACE",
-];
+] as const;
 
 export type FontrSettings = {
   toDownload: boolean;
   fonts: {
     name: string;
     style: (typeof FONTR_STYLE)[number];
+    format: string;
+    path: string;
   }[];
 };
 
 export const DEFAULT_SETTINGS: FontrSettings = {
   toDownload: false,
-  fonts: [
-    {
-      name: "Noto Sans",
-      style: "SANS-SERIF",
-    },
-    {
-      name: "Times New Roman",
-      style: "SERIF",
-    },
-  ],
+  fonts: [],
 };

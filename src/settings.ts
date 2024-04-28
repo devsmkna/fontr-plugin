@@ -1,14 +1,9 @@
-import {
-  App,
-  DropdownComponent,
-  Notice,
-  PluginSettingTab,
-  Setting,
-  TextComponent,
-} from "obsidian";
+import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import FontrPlugin from "src/main";
 import { FONTR_STYLE } from "./types";
-import Sortable from "sortablejs";
+import { appendFile } from "fs";
+import { readdir } from "fs/promises";
+import { platform } from "os";
 
 export class FontrSettingTab extends PluginSettingTab {
   plugin: FontrPlugin;
@@ -19,15 +14,64 @@ export class FontrSettingTab extends PluginSettingTab {
     this.plugin = plugin;
   }
 
+  getFontsInstalled() {
+    let dirs: string[];
+    switch (platform()) {
+      case "win32":
+        dirs = ["c:/windows/fonts", "../microsoft/windows/fonts"];
+    }
+
+    return Promise.all(
+      dirs.map((dir) => readdir(dir, { withFileTypes: false })),
+    );
+  }
+
   display() {
     const { containerEl } = this;
     containerEl.empty();
     containerEl.createEl("h1", { text: "Fontr" });
 
+    containerEl.createEl("datalist", {}, (el) => {
+      this.getFontsInstalled().then((fontDirs) => {
+        fontDirs.forEach((fontDir) => {
+          fontDir.forEach((option) => {
+            el.createEl("option", {
+              value: option,
+            });
+          });
+        });
+      });
+      el.setAttr("id", "fontsdata");
+    });
+
     new Setting(containerEl)
-      .setName("Add new font")
-      .setDesc("Add local fonts by providing the font name and it's style")
-      .addButton((button) => {
+      .addDropdown((drop) => {
+        drop.addOptions(
+          FONTR_STYLE.reduce<Record<string, string>>(
+            (acc, font) =>
+              (acc = {
+                ...acc,
+                [font]: font.toLowerCase(),
+              }),
+            {},
+          ),
+        );
+      })
+      .addSearch((search) => {
+        search.inputEl.setAttr("list", "fontsdata");
+        search.setPlaceholder("Search font name...").onChange((newName) => {
+          if (
+            newName &&
+            this.plugin.settings.fonts.find(
+              ({ name }) => name.toLowerCase() === newName.toLowerCase(),
+            )
+          ) {
+            new Notice("Font with the same name already added");
+            return;
+          }
+        });
+      })
+      .addExtraButton((button) => {
         const input = containerEl.createEl("input", {
           attr: {
             type: "file",
@@ -38,10 +82,45 @@ export class FontrSettingTab extends PluginSettingTab {
           },
         });
 
-        input.onchange = async () => {
+        input.oninput = async () => {
           const { files } = input;
           if (!files.length) return;
-          console.log(files[0]);
+
+          const file = files[0];
+          const [fileName, fileExt] = file.name.replace(/-/g, " ").split(".");
+
+          if (
+            this.plugin.settings.fonts.find(({ name }) => name === fileName)
+          ) {
+            new Notice("Font with the same name already added");
+            return;
+          }
+
+          this.plugin.settings.fonts.push({
+            name: fileName,
+            style: "MONOSPACE",
+            format: fileExt,
+            path: file.name,
+          });
+
+          appendFile(
+            "styles.css",
+            `@font-face {
+              font-family: "${fileName}"; 
+              src: local("${file.name}");
+            }`,
+            (err) => {
+              console.log("here");
+              if (err) {
+                new Notice("Error while adding style to style.css");
+                return;
+              }
+            },
+          );
+
+          this.plugin.saveSettings();
+          console.log(this.plugin.settings.fonts);
+          this.display();
           try {
           } catch (err) {
             new Notice("Error while importing font file");
@@ -51,55 +130,35 @@ export class FontrSettingTab extends PluginSettingTab {
           input.value = null;
         };
 
-        button.setButtonText("Import font").buttonEl.appendChild(input);
-        button.onClick(() => input.click());
+        button.setIcon("folder-search").onClick(() => input.click());
       });
-
-    const localImport = new Setting(containerEl)
-      .setName("Local import")
-      .setDesc(
-        "Import an already installed font by providing its name, you can optionally select a font style for aesthetic purpose (a different logo will be shown in the list).",
-      );
-
-    const fontName = new TextComponent(localImport.controlEl).setPlaceholder(
-      "Font name",
-    );
-
-    const options: Record<string, string> = {};
-    FONTR_STYLE.map((style) => (options[style] = style.toLowerCase()));
-    const fontStyle = new DropdownComponent(localImport.controlEl).addOptions(
-      options,
-    );
-
-    const addFont = localImport.addButton((button) => {
-      button.setButtonText("Add").onClick(async () => {
-        this.plugin.settings.fonts.push({
-          name: fontName.getValue(),
-          style: fontStyle.getValue(),
-        });
-        await this.plugin.saveSettings();
-        this.display();
-      });
-    });
-
-    const fontList = containerEl.createDiv();
-    Sortable.create(fontList, {
-      animation: 500,
-      dragoverBubble: true,
-      forceFallback: true,
-      easing: "cubic-bezier(1, 0, 0, 1)",
-      onSort: (command: { oldIndex: number; newIndex: number }) => {
-        const arrayResult = this.plugin.settings.fonts;
-        const [removed] = arrayResult.splice(command.oldIndex, 1);
-        arrayResult.splice(command.newIndex, 0, removed);
-        this.plugin.settings.fonts = arrayResult;
-        this.plugin.saveSettings();
-      },
-    });
 
     this.plugin.settings.fonts.forEach((font) => {
-      const container = fontList.createDiv();
-      new Setting(container).setName(font.name);
+      const fontSetting = new Setting(containerEl)
+        .setName(font.name)
+        .setDesc(`${font.style} | ${font.format} | ${font.path}`)
+        .setDesc("<b>Ciao</b>")
+        .addExtraButton((button) => {
+          button.setIcon("settings-2");
+        })
+        .addExtraButton((button) => {
+          button.setIcon("up-chevron-glyph");
+        })
+        .addExtraButton((button) => {
+          button.setIcon("down-chevron-glyph");
+        })
+        .addExtraButton((button) => {
+          button.setIcon("cross");
+          button.onClick(() => {
+            this.plugin.settings.fonts = this.plugin.settings.fonts.filter(
+              (f) => f.name !== font.name,
+            );
+            this.plugin.saveSettings();
+            this.display();
+          });
+        });
+
+      fontSetting.descEl.createDiv({});
     });
   }
 }

@@ -2,16 +2,10 @@
   "toDownload": false,
   "fonts": [
     {
-      "name": "Noto Sans",
-      "style": "SANS-SERIF"
-    },
-    {
-      "name": "Times New Roman",
-      "style": "SERIF"
-    },
-    {
-      "name": "Etruscanfantasy",
-      "style": "SANS-SERIF"
+      "name": "Etrurianfantasy v2 Regular",
+      "style": "MONOSPACE",
+      "format": "ttf",
+      "path": "Etrurianfantasy-v2-Regular.ttf"
     }
   ]
 }

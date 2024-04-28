@@ -9,10 +9,12 @@ export default class HighlightrPlugin extends Plugin {
   settings: FontrSettings;
 
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, this.loadData());
+    const data = await this.loadData();
+    this.settings = data || Object.assign({}, DEFAULT_SETTINGS);
   }
 
   async saveSettings() {
+    console.log(this.settings.fonts);
     await this.saveData(this.settings);
   }
 
