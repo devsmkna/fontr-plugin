@@ -1,3 +1,28 @@
-.fontr-import {
-  background-color: var(--interactive-accent);
+.font-container {
+  display: grid;
+  grid-gap: 1rem;
+  grid-template-columns: 0fr auto;
+  align-items: center;
+}
+
+.font-container-icon {
+  display: flex;
+  height: 24px;
+  width: 24px;
+}
+
+.is-disabled {
+  cursor: default;
+}
+
+.is-disabled:hover {
+  background-color: transparent !important;
+}
+
+.is-disabled:active {
+  color: var(--icon-color);
+}
+
+.input-disabled {
+  display: none;
 }
