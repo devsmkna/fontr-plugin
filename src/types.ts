@@ -1,14 +1,15 @@
 export const FONTR_STYLE = [
-  "SERIF",
-  "SANS-SERIF",
-  "DISPLAY",
-  "SCRIPT",
-  "MONOSPACE",
+  "serif",
+  "sans",
+  "monospace",
+  "display",
+  "script",
 ] as const;
 
 export type FontrSettings = {
-  toDownload: boolean;
+  isRenaming: boolean;
   fonts: {
+    id: string;
     name: string;
     style: (typeof FONTR_STYLE)[number];
     format: string;
@@ -17,6 +18,6 @@ export type FontrSettings = {
 };
 
 export const DEFAULT_SETTINGS: FontrSettings = {
-  toDownload: false,
+  isRenaming: false,
   fonts: [],
 };
